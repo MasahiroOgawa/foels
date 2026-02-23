@@ -1,15 +1,15 @@
 [submodule "unimatch"]
-	path = reconstruct4D/ext/unimatch
+	path = foels/ext/unimatch
 	url = git@github.com:MasahiroOgawa/unimatch.git
 [submodule "InternImage"]
-	path = reconstruct4D/ext/InternImage
+	path = foels/ext/InternImage
 	url = git@github.com:MasahiroOgawa/InternImage.git
 [submodule "cityscapesScripts"]
-	path = reconstruct4D/ext/cityscapesScripts
+	path = foels/ext/cityscapesScripts
 	url = https://github.com/mcordts/cityscapesScripts.git
 [submodule "unsupervised_detection"]
-	path = reconstruct4D/ext/unsupervised_detection
+	path = foels/ext/unsupervised_detection
 	url = git@github.com:MasahiroOgawa/unsupervised_detection.git
-[submodule "reconstruct4D/ext/memflow"]
-	path = reconstruct4D/ext/memflow
+[submodule "foels/ext/memflow"]
+	path = foels/ext/memflow
 	url = https://github.com/DQiaole/MemFlow.git

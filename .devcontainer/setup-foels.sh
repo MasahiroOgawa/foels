@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Setting up reconstruct4D environment..."
+echo "Setting up foels environment..."
 
 # Check if we're in the right directory
 if [ -f "/workspace/pyproject.toml" ]; then
@@ -46,8 +46,8 @@ except Exception as e:
     print(f'Warning: Could not prepare UniMatch model: {e}')
 " || echo "Warning: Some models could not be pre-downloaded. They will be downloaded on first use."
     
-    echo "reconstruct4D environment setup complete!"
+    echo "foels environment setup complete!"
     echo "To activate the environment, run: source .venv/bin/activate"
 else
-    echo "Note: reconstruct4D project files not found. Run 'uv sync' manually after cloning the repository."
+    echo "Note: foels project files not found. Run 'uv sync' manually after cloning the repository."
 fi

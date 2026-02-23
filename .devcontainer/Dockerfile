@@ -6,7 +6,7 @@ ENV TZ="$TZ"
 ARG CLAUDE_CODE_VERSION=latest
 
 # Install basic development tools and iptables/ipset
-# Also install Python and FFmpeg for reconstruct4D
+# Also install Python and FFmpeg for foels
 RUN apt-get update && apt-get install -y --no-install-recommends \
   less \
   git \

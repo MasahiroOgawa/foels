@@ -1,12 +1,12 @@
 # MemFlow Integration Summary
 
 ## Overview
-MemFlow has been successfully integrated into the reconstruct4D project as an alternative optical flow method to Unimatch.
+MemFlow has been successfully integrated into the foels project as an alternative optical flow method to Unimatch.
 
 ## Installation
 
 ### 1. MemFlow is added as a git submodule
-Located at: `reconstruct4D/ext/memflow`
+Located at: `foels/ext/memflow`
 
 ### 2. Environment Setup
 MemFlow requires a conda environment (uv was attempted but incompatible with CUDA packages):
@@ -18,7 +18,7 @@ pip install yacs loguru einops timm==0.4.12 imageio matplotlib tensorboard scipy
 ```
 
 ### 3. Model Weights
-Pre-trained model downloaded to: `reconstruct4D/ext/memflow/ckpts/MemFlowNet_things.pth`
+Pre-trained model downloaded to: `foels/ext/memflow/ckpts/MemFlowNet_things.pth`
 
 ## Configuration
 
@@ -31,7 +31,7 @@ OpticalFlow:
   # MemFlow settings
   memflow_model: "MemFlowNet"
   memflow_stage: "things"
-  memflow_weights: "reconstruct4D/ext/memflow/ckpts/MemFlowNet_things.pth"
+  memflow_weights: "foels/ext/memflow/ckpts/MemFlowNet_things.pth"
 
   # Unimatch settings (fallback)
   unimatch_model: "gmflow-scale2-regrefine6-mixdata-train320x576-4e7b215d.pth"

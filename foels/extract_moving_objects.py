@@ -2,7 +2,7 @@ import argparse
 import logging
 import os
 import time
-import yaml 
+import yaml
 import math
 
 import cv2
@@ -130,7 +130,9 @@ class MovingObjectExtractor:
 
         # compute posterior probability of moving pixels
         self.posterior_movpix_prob = self.seg.moving_prob * self.foe.moving_prob
-        self.posterior_movpix_mask = self.posterior_movpix_prob > self.args.thre_moving_prob
+        self.posterior_movpix_mask = (
+            self.posterior_movpix_prob > self.args.thre_moving_prob
+        )
 
         self._compute_moving_obj_mask()
 
@@ -195,7 +197,8 @@ class MovingObjectExtractor:
         # save segmentation image if it is not saved yet.
         if not os.path.exists(f"{self.args.segment_result_dir}/{self.cur_imgname}"):
             cv2.imwrite(
-                f"{self.args.segment_result_dir}/{self.cur_imgname}", self.seg.result_img
+                f"{self.args.segment_result_dir}/{self.cur_imgname}",
+                self.seg.result_img,
             )
 
         # save the posterior mask image
@@ -250,51 +253,112 @@ class MovingObjectExtractor:
 
 if __name__ == "__main__":
     # It first looks for `--config`, loads it, and then defines all other arguments.
-    parser = argparse.ArgumentParser(description="Extract moving objects from a video sequence.", add_help=False)
-    parser.add_argument("--config", type=str, default="../script/foels_param.yaml", help="Path to the YAML config file.")
+    parser = argparse.ArgumentParser(
+        description="Extract moving objects from a video sequence.", add_help=False
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="../script/foels_param.yaml",
+        help="Path to the YAML config file.",
+    )
     args, remaining_argv = parser.parse_known_args()
 
     config = {}
     if os.path.exists(args.config):
-        with open(args.config, 'r') as f:
+        with open(args.config, "r") as f:
             config_data = yaml.safe_load(f)
-            if config_data and 'MovingObjectExtractor' in config_data:
-                config = config_data['MovingObjectExtractor']
+            if config_data and "MovingObjectExtractor" in config_data:
+                config = config_data["MovingObjectExtractor"]
 
     # Now, define all arguments, using the loaded YAML values as defaults
     parser = argparse.ArgumentParser(parents=[parser])
     parser.add_argument("--input_dir", type=str, default=config.get("input_dir"))
-    parser.add_argument("--flow_result_dir", type=str, default=config.get("flow_result_dir"))
-    parser.add_argument("--segment_result_dir", type=str, default=config.get("segment_result_dir"))
+    parser.add_argument(
+        "--flow_result_dir", type=str, default=config.get("flow_result_dir")
+    )
+    parser.add_argument(
+        "--segment_result_dir", type=str, default=config.get("segment_result_dir")
+    )
     parser.add_argument("--result_dir", type=str, default=config.get("result_dir"))
-    parser.add_argument("--segment_model_type", type=str, default=config.get("segment_model_type"))
-    parser.add_argument("--segment_model_name", type=str, default=config.get("segment_model_name"))
-    parser.add_argument("--segment_task_type", type=str, default=config.get("segment_task_type"))
+    parser.add_argument(
+        "--segment_model_type", type=str, default=config.get("segment_model_type")
+    )
+    parser.add_argument(
+        "--segment_model_name", type=str, default=config.get("segment_model_name")
+    )
+    parser.add_argument(
+        "--segment_task_type", type=str, default=config.get("segment_task_type")
+    )
     parser.add_argument("--loglevel", type=int, default=config.get("loglevel"))
-    parser.add_argument("--resultimg_width", type=int, default=config.get("resultimg_width"))
+    parser.add_argument(
+        "--resultimg_width", type=int, default=config.get("resultimg_width")
+    )
     parser.add_argument("--skip_frames", type=int, default=config.get("skip_frames"))
-    parser.add_argument("--ransac_all_inlier_estimation", type=bool, default=config.get("ransac_all_inlier_estimation"))
-    parser.add_argument("--foe_search_step", type=int, default=config.get("foe_search_step"))
+    parser.add_argument(
+        "--ransac_all_inlier_estimation",
+        type=bool,
+        default=config.get("ransac_all_inlier_estimation"),
+    )
+    parser.add_argument(
+        "--foe_search_step", type=int, default=config.get("foe_search_step")
+    )
     parser.add_argument("--num_ransac", type=int, default=config.get("num_ransac"))
-    parser.add_argument("--thre_moving_fraction_in_obj", type=float, default=config.get("thre_moving_fraction_in_obj"))
-    parser.add_argument("--movprob_lengthfactor_coeff", type=float, default=config.get("movprob_lengthfactor_coeff"))
-    parser.add_argument("--middle_theta_deg", type=float, default=config.get("middle_theta_deg"))
-    parser.add_argument("--thre_moving_prob", type=float, default=config.get("thre_moving_prob"))
-    parser.add_argument("--thre_static_prob", type=float, default=config.get("thre_static_prob"))
+    parser.add_argument(
+        "--thre_moving_fraction_in_obj",
+        type=float,
+        default=config.get("thre_moving_fraction_in_obj"),
+    )
+    parser.add_argument(
+        "--movprob_lengthfactor_coeff",
+        type=float,
+        default=config.get("movprob_lengthfactor_coeff"),
+    )
+    parser.add_argument(
+        "--middle_theta_deg", type=float, default=config.get("middle_theta_deg")
+    )
+    parser.add_argument(
+        "--thre_moving_prob", type=float, default=config.get("thre_moving_prob")
+    )
+    parser.add_argument(
+        "--thre_static_prob", type=float, default=config.get("thre_static_prob")
+    )
     # parser.add_argument("--thre_dominantflow_angle_deg", type=float, default=config.get("thre_dominantflow_angle_deg"))
-    parser.add_argument("--thre_flowlength", type=float, default=config.get("thre_flowlength"))
-    parser.add_argument("--thre_inlier_angle_deg", type=float, default=config.get("thre_inlier_angle_deg"))
-    parser.add_argument("--thre_inlier_rate", type=float, default=config.get("thre_inlier_rate"))
-    parser.add_argument("--thre_flow_existing_rate", type=float, default=config.get("thre_flow_existing_rate"))
-    parser.add_argument("--flowarrow_step_forvis", type=int, default=config.get("flowarrow_step_forvis"))
-    parser.add_argument("--flowlength_factor_forvis", type=int, default=config.get("flowlength_factor_forvis"))
-    parser.add_argument("--result_img_suffix", type=str, default=config.get("result_img_suffix", "_result_comb.png"))
-    
+    parser.add_argument(
+        "--thre_flowlength", type=float, default=config.get("thre_flowlength")
+    )
+    parser.add_argument(
+        "--thre_inlier_angle_deg",
+        type=float,
+        default=config.get("thre_inlier_angle_deg"),
+    )
+    parser.add_argument(
+        "--thre_inlier_rate", type=float, default=config.get("thre_inlier_rate")
+    )
+    parser.add_argument(
+        "--thre_flow_existing_rate",
+        type=float,
+        default=config.get("thre_flow_existing_rate"),
+    )
+    parser.add_argument(
+        "--flowarrow_step_forvis", type=int, default=config.get("flowarrow_step_forvis")
+    )
+    parser.add_argument(
+        "--flowlength_factor_forvis",
+        type=int,
+        default=config.get("flowlength_factor_forvis"),
+    )
+    parser.add_argument(
+        "--result_img_suffix",
+        type=str,
+        default=config.get("result_img_suffix", "_result_comb.png"),
+    )
+
     final_args = parser.parse_args(remaining_argv)
 
     print("[INFO] Parameters loaded for MovingObjectExtractor:")
     for key, value in vars(final_args).items():
         print(f"  - {key}: {value}")
-        
+
     moe = MovingObjectExtractor(final_args)
     moe.compute()

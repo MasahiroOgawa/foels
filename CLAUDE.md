@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the **reconstruct4D** project, a 4D computer vision reconstruction system implementing the FOELS (Focus of Expansion based Localized Segmentation) pipeline for detecting and tracking moving objects in video sequences.
+This is the **foels** project, a 4D computer vision reconstruction system implementing the FOELS (Focus of Expansion based Localized Segmentation) pipeline for detecting and tracking moving objects in video sequences.
 
 ## Development Setup
 
@@ -39,8 +39,8 @@ ruff check .
 ruff format .
 
 # Run specific module tests
-python -m reconstruct4D.optical_flow.flow_calc [input] [output]
-python -m reconstruct4D.camera_motion.calculate_camera_mat [args]
+python -m foels.optical_flow.flow_calc [input] [output]
+python -m foels.camera_motion.calculate_camera_mat [args]
 
 # Debug mode with detailed logging
 LOG_LEVEL=5 ./script/run_foels.sh [input] [output]
@@ -49,11 +49,11 @@ LOG_LEVEL=5 ./script/run_foels.sh [input] [output]
 ## Architecture
 
 ### Pipeline Components (Sequential Processing)
-1. **Optical Flow** (`reconstruct4D/optical_flow/`) - Calculates pixel motion using UniMatch or RAFT
-2. **Camera Motion** (`reconstruct4D/camera_motion/`) - Estimates global camera movement
-3. **FoE Calculation** (`reconstruct4D/foe/`) - Computes Focus of Expansion points
-4. **Moving Pixel Detection** (`reconstruct4D/movingpixel_detection/`) - Identifies moving vs static pixels
-5. **Object Refinement** (`reconstruct4D/object_refinement/`) - Segments and refines moving objects using InternImage/OneFormer
+1. **Optical Flow** (`foels/optical_flow/`) - Calculates pixel motion using UniMatch or RAFT
+2. **Camera Motion** (`foels/camera_motion/`) - Estimates global camera movement
+3. **FoE Calculation** (`foels/foe/`) - Computes Focus of Expansion points
+4. **Moving Pixel Detection** (`foels/movingpixel_detection/`) - Identifies moving vs static pixels
+5. **Object Refinement** (`foels/object_refinement/`) - Segments and refines moving objects using InternImage/OneFormer
 
 ### Key Configuration
 - **YAML Parameters**: `script/params_*.yml` - Controls pipeline behavior
@@ -66,7 +66,7 @@ LOG_LEVEL=5 ./script/run_foels.sh [input] [output]
 - `unsupervised_detection/` - Additional detection models
 
 ### Important Files
-- `reconstruct4D/FOELS.py` - Main pipeline orchestrator
+- `foels/FOELS.py` - Main pipeline orchestrator
 - `script/config.py` - Configuration management
 - `result/*/result.mp4` - Final output videos with overlays
 
@@ -86,5 +86,5 @@ Results are saved to specified directory with:
 
 ### Common Debugging
 - Use `LOG_LEVEL=5` for interactive matplotlib debugging
-- Check `reconstruct4D/util/logger.py` for logging configuration
+- Check `foels/util/logger.py` for logging configuration
 - VS Code launch configs available in `.vscode/launch.json`

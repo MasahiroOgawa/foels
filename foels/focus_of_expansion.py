@@ -1,6 +1,5 @@
 import logging
 from enum import Enum
-import math
 
 import cv2
 import numpy as np
@@ -94,7 +93,7 @@ class FoE:
         self.moving_prob = (
             np.ones((self.flow.shape[0], self.flow.shape[1]), dtype=np.float16) * 0.5
         )
-        self.moving_prob[self.sky_mask == True] = 0.0
+        self.moving_prob[self.sky_mask] = 0.0
         self.foe_hom = None
         self.foe_sign = 1
 
@@ -102,7 +101,7 @@ class FoE:
         num_flow_existing_pix_in_static = 0
 
         # check pixels inside static mask
-        staticpix_indices = np.where(self.static_mask == True)
+        staticpix_indices = np.where(self.static_mask)
         sum_flow_length = 0.0
         for i in range(len(staticpix_indices[0])):
             row = staticpix_indices[0][i]
@@ -149,7 +148,7 @@ class FoE:
                 flow_length = np.sqrt(u**2 + v**2)
                 # we use the similar probability as camera is moving case.
                 self.moving_prob[row, col] = min(
-                    1.0, abs(np.log10(1+abs(flow_length / self.THRE_FLOWLENGTH)))
+                    1.0, abs(np.log10(1 + abs(flow_length / self.THRE_FLOWLENGTH)))
                 )
 
     def comp_foe_by_ransac(self):
@@ -556,7 +555,9 @@ class FoE:
                     mean_length = self.THRE_FLOWLENGTH
                 else:
                     mean_length = self.mean_flow_length_in_static
-                length_factor = abs(np.log10(1+abs(flow_length - mean_length))) # totally the same case should bo 0 = log(1).
+                length_factor = abs(
+                    np.log10(1 + abs(flow_length - mean_length))
+                )  # totally the same case should bo 0 = log(1).
 
                 # check the angle between flow and expected flow direction (signed FoE-to-each-pixel) is lower than the threshold.
                 expect_flowdir = self.foe_sign * np.array([col - foe_u, row - foe_v, 1])
@@ -585,7 +586,7 @@ class FoE:
                 )
 
         # Ensure sky mask remains 0 probability after calculations
-        self.moving_prob[self.sky_mask == True] = 0.0
+        self.moving_prob[self.sky_mask] = 0.0
 
     def _show_foe_flow_arrow_img(
         self, row, col, foe_u, foe_v, foe_sign, flow_u, flow_v
@@ -656,13 +657,13 @@ class FoE:
         for row in range(0, flow.shape[0], self.FLOWARROW_STEP_FORVIS):
             for col in range(0, flow.shape[1], self.FLOWARROW_STEP_FORVIS):
                 if self.foe_hom is None:
-                    self.logger.warning(
-                        "[WARNING] FoE is None."
-                    )
+                    self.logger.warning("[WARNING] FoE is None.")
                     decision = 0
                 else:
-                    decision = self._inlier_decision(row, col, self.foe_hom, self.foe_sign)
-                
+                    decision = self._inlier_decision(
+                        row, col, self.foe_hom, self.foe_sign
+                    )
+
                 if decision == 1:
                     color = (0, 255, 0)  # inlier: green
                 elif decision == -1:

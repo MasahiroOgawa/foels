@@ -22,7 +22,7 @@ run_and_eval_foels(){
     else
         echo "[INFO] input files do not exist. set up and download it."
         (
-            cd ${ROOT_DIR}/reconstruct4D/ext/unsupervised_detection
+            cd ${ROOT_DIR}/foels/ext/unsupervised_detection
             # to avoid "ADDR2LINE: unbound variable" error, unset -u.
             set +eu
             eval "$(conda shell.bash activate contextual-information-separation)"
@@ -50,7 +50,7 @@ run_and_eval_foels(){
         unset VIRTUAL_ENV
     fi
     (
-        cd ${ROOT_DIR}/reconstruct4D/ext/unsupervised_detection
+        cd ${ROOT_DIR}/foels/ext/unsupervised_detection
         # to avoid "ADDR2LINE: unbound variable" error, unset -u.
         set +eu
         eval "$(conda shell.bash activate contextual-information-separation)"
@@ -60,7 +60,7 @@ run_and_eval_foels(){
     )
 
     echo "[INFO] copy results to result directory."
-    cp ${ROOT_DIR}/reconstruct4D/ext/unsupervised_detection/results/Foels/${result_dir}/result.csv ${RESULT_DIR}
+    cp ${ROOT_DIR}/foels/ext/unsupervised_detection/results/Foels/${result_dir}/result.csv ${RESULT_DIR}
 
     echo "[INFO] finish."
 }

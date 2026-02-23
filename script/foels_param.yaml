@@ -13,7 +13,7 @@ OpticalFlow:
   # MemFlow settings
   memflow_model: "MemFlowNet_T" # MemFlowNet or MemFlowNet_T (T is stronger)
   memflow_stage: "things" # things, sintel, kitti, spring, things_kitti
-  memflow_weights: "reconstruct4D/ext/memflow/ckpts/MemFlowNet_T_things.pth"
+  memflow_weights: "foels/ext/memflow/ckpts/MemFlowNet_T_things.pth"
 
 MovingObjectExtractor:
   # input/output directories

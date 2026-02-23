@@ -4,5 +4,5 @@
         "editor.formatOnType": true,
     },
     "python.formatting.provider": "none",
-    "cmake.sourceDirectory": "/home/masahiro/proj/study/reconstruct4D/reconstruct4D/ext/davis",
+    "cmake.sourceDirectory": "/home/masahiro/proj/study/foels/foels/ext/davis",
 }

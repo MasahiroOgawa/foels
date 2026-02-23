@@ -51,5 +51,5 @@
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "bash /workspace/.devcontainer/setup-reconstruct4d.sh && sudo /usr/local/bin/init-firewall.sh"
+  "postCreateCommand": "bash /workspace/.devcontainer/setup-foels.sh && sudo /usr/local/bin/init-firewall.sh"
 }

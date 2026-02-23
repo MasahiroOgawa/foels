@@ -1,15 +1,11 @@
-import inspect
 import sys
 import os
-import cv2
 import numpy as np
 import torch
 import logging
 from typing import Optional, Tuple
 import numpy.typing as npt
 from ext.unimatch import utils
-from ext.unimatch.utils import frame_utils
-from ext.unimatch.utils import flow_viz
 from PIL import Image
 
 # Setup logger
@@ -51,7 +47,12 @@ class MemFlow:
     Compute optical flow using MemFlow algorithm
     """
 
-    def __init__(self, model_name: str = "MemFlowNet", stage: str = "things", weights_path: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        model_name: str = "MemFlowNet",
+        stage: str = "things",
+        weights_path: Optional[str] = None,
+    ) -> None:
         """
         Initialize MemFlow model
         args:
@@ -60,7 +61,7 @@ class MemFlow:
             weights_path: path to pretrained weights
         """
         # Validate memflow submodule exists
-        memflow_path = os.path.join(os.path.dirname(__file__), 'ext/memflow')
+        memflow_path = os.path.join(os.path.dirname(__file__), "ext/memflow")
         if not os.path.exists(memflow_path):
             raise RuntimeError(
                 "MemFlow submodule not found. Please run: "
@@ -70,20 +71,22 @@ class MemFlow:
         # Add to path with error handling
         if memflow_path not in sys.path:
             sys.path.append(memflow_path)
-            sys.path.append(os.path.join(memflow_path, 'core'))
+            sys.path.append(os.path.join(memflow_path, "core"))
 
         # Import MemFlow components with proper error handling
         try:
-            if stage == 'things':
+            if stage == "things":
                 from configs.things_memflownet import get_cfg
-            elif stage == 'sintel':
+            elif stage == "sintel":
                 from configs.sintel_memflownet import get_cfg
-            elif stage == 'kitti':
+            elif stage == "kitti":
                 from configs.kitti_memflownet import get_cfg
-            elif stage == 'spring':
+            elif stage == "spring":
                 from configs.spring_memflownet import get_cfg
             else:
-                raise ValueError(f"Unknown stage: {stage}. Must be one of: things, sintel, kitti, spring")
+                raise ValueError(
+                    f"Unknown stage: {stage}. Must be one of: things, sintel, kitti, spring"
+                )
         except ImportError as e:
             raise ImportError(
                 f"Failed to import MemFlow config for stage '{stage}'. "
@@ -112,12 +115,14 @@ class MemFlow:
 
         # Check if CUDA is available with proper error handling
         try:
-            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            if self.device.type == 'cpu':
-                logger.warning("CUDA not available, using CPU. Performance will be slower.")
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            if self.device.type == "cpu":
+                logger.warning(
+                    "CUDA not available, using CPU. Performance will be slower."
+                )
         except Exception as e:
             logger.error(f"Error setting up compute device: {e}")
-            self.device = torch.device('cpu')
+            self.device = torch.device("cpu")
 
         # Create model
         logger.info(f"Creating {model_name} model on {self.device}...")
@@ -129,30 +134,36 @@ class MemFlow:
         # Load pretrained weights if available
         if weights_path:
             if not os.path.exists(weights_path):
-                logger.warning(f"Pretrained model not found at {weights_path}. Using random initialization.")
+                logger.warning(
+                    f"Pretrained model not found at {weights_path}. Using random initialization."
+                )
             else:
                 try:
                     logger.info(f"Loading pretrained model from {weights_path}")
                     checkpoint = torch.load(weights_path, map_location=self.device)
 
                     # Handle different checkpoint formats
-                    if 'model' in checkpoint:
-                        state_dict = checkpoint['model']
+                    if "model" in checkpoint:
+                        state_dict = checkpoint["model"]
                     else:
                         state_dict = checkpoint
 
                     # Remove 'module.' prefix if present
-                    if state_dict and 'module' in list(state_dict.keys())[0]:
+                    if state_dict and "module" in list(state_dict.keys())[0]:
                         new_state_dict = {}
                         for key in state_dict.keys():
-                            new_state_dict[key.replace('module.', '', 1)] = state_dict[key]
+                            new_state_dict[key.replace("module.", "", 1)] = state_dict[
+                                key
+                            ]
                         state_dict = new_state_dict
 
                     self.model.load_state_dict(state_dict, strict=False)
                     logger.info("MemFlow model loaded successfully!")
                 except Exception as e:
                     logger.error(f"Failed to load pretrained weights: {e}")
-                    raise RuntimeError(f"Could not load model weights from {weights_path}: {e}")
+                    raise RuntimeError(
+                        f"Could not load model weights from {weights_path}: {e}"
+                    )
 
         self.model.eval()
 
@@ -163,7 +174,9 @@ class MemFlow:
         self.flow = None
         self.flow_img = None
 
-    def _compute_flow(self, image1_tensor: torch.Tensor, image2_tensor: torch.Tensor) -> Tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8]]:
+    def _compute_flow(
+        self, image1_tensor: torch.Tensor, image2_tensor: torch.Tensor
+    ) -> Tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8]]:
         """
         Internal method to compute flow from preprocessed tensors.
         args:
@@ -188,7 +201,9 @@ class MemFlow:
             with torch.no_grad():
                 # Process image pair (batch_size=1, time=2)
                 images_batch = images.unsqueeze(0)  # Add batch dimension
-                flow_low, flow_pred = self.processor.step(images_batch, end=True, add_pe=False)
+                flow_low, flow_pred = self.processor.step(
+                    images_batch, end=True, add_pe=False
+                )
                 flow = padder.unpad(flow_pred[0]).cpu().numpy()
 
             # Convert to H x W x 2 format (transpose from 2 x H x W)
@@ -200,7 +215,9 @@ class MemFlow:
             logger.error(f"Error computing optical flow: {e}")
             raise RuntimeError(f"Failed to compute optical flow: {e}")
 
-    def compute_from_images(self, img1_path: str, img2_path: str) -> Tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8]]:
+    def compute_from_images(
+        self, img1_path: str, img2_path: str
+    ) -> Tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8]]:
         """
         Compute optical flow from two image paths
         args:
@@ -224,7 +241,9 @@ class MemFlow:
             logger.error(f"Error loading images: {e}")
             raise RuntimeError(f"Failed to load images for flow computation: {e}")
 
-    def compute_from_arrays(self, img1_array: npt.NDArray[np.uint8], img2_array: npt.NDArray[np.uint8]) -> Tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8]]:
+    def compute_from_arrays(
+        self, img1_array: npt.NDArray[np.uint8], img2_array: npt.NDArray[np.uint8]
+    ) -> Tuple[npt.NDArray[np.float32], npt.NDArray[np.uint8]]:
         """
         Compute optical flow from two numpy arrays
         args:
@@ -236,7 +255,9 @@ class MemFlow:
         """
         # Validate input shapes
         if img1_array.shape != img2_array.shape:
-            raise ValueError(f"Image shapes must match. Got {img1_array.shape} and {img2_array.shape}")
+            raise ValueError(
+                f"Image shapes must match. Got {img1_array.shape} and {img2_array.shape}"
+            )
         if len(img1_array.shape) != 3 or img1_array.shape[2] != 3:
             raise ValueError(f"Images must be H x W x 3. Got shape {img1_array.shape}")
 

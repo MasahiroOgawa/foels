@@ -71,7 +71,7 @@ dist/
 *.egg
 
 # Submodules - will be initialized after container creation
-reconstruct4D/ext/
+foels/ext/
 InternImage/
 unsupervised_detection/
 UniMatch/

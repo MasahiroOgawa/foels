@@ -1,7 +1,7 @@
 #!/bin/bash
 ###
 
-DATA_RELATIVE_DIR="reconstruct4D/ext/unsupervised_detection/download/DAVIS2016/DAVIS/JPEGImages/480p"
+DATA_RELATIVE_DIR="foels/ext/unsupervised_detection/download/DAVIS2016/DAVIS/JPEGImages/480p"
 DATASET_NAME="DAVIS2016"
 
 

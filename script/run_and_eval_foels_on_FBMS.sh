@@ -1,7 +1,7 @@
 #!/bin/bash
 ###
 
-DATA_RELATIVE_DIR="reconstruct4D/ext/unsupervised_detection/download/FBMS/Testset"
+DATA_RELATIVE_DIR="foels/ext/unsupervised_detection/download/FBMS/Testset"
 DATASET_NAME="FBMS"
 RESULT_DIR="FBMS/Testset"
 

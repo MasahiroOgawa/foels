@@ -1,4 +1,4 @@
-# reconstruct4D
+# foels
 This is a 4D reconstruction project of Masahiro Ogawa.
 
 # Setup
@@ -6,14 +6,14 @@ This is a 4D reconstruction project of Masahiro Ogawa.
 This is the easiest way.
 Just clone this repositoy as;
 ```bash
-git clone git@github.com:MasahiroOgawa/reconstruct4D.git
+git clone git@github.com:MasahiroOgawa/foels.git
 ```
 And start devcontainer by opening vscode and selecting "reopen in devcontainer".
 
 ## local setup
 clone
 ```bash
-git clone git@github.com:MasahiroOgawa/reconstruct4D.git
+git clone git@github.com:MasahiroOgawa/foels.git
 git submodule update --init --recursive
 ```
 Install uv for virtual environment management
@@ -25,15 +25,15 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 Set up virtual environment
 ```
 uv sync
-source .vev/bin/activate
+source .venv/bin/activate
 ```
 
 **Notice:** InternImage, and unsupervised_detection will be dropped in the future, so it still use old conda environment.
 ```
 source ${HOME}/anaconda3/bin/activate
 conda init
-conda env create -f reconstruct4D/ext/InternImage/environment.yml
-conda env create -f reconstruct4D/ext/unsupervised_detection/environment.yml
+conda env create -f foels/ext/InternImage/environment.yml
+conda env create -f foels/ext/unsupervised_detection/environment.yml
 ```
 
 # Run demo

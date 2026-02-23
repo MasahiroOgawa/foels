@@ -130,11 +130,11 @@ case ${SEG_MODEL_NAME} in
        "upernet_internimage_xl_640_160k_ade20k.pth" |\
        "upernet_internimage_h_896_160k_ade20k.pth")
               SEG_MODEL_TYPE="internimage"
-              SEG_CHECKPOINT_DIR="${ROOT_DIR}/reconstruct4D/ext/InternImage/checkpoint_dir/seg"
+              SEG_CHECKPOINT_DIR="${ROOT_DIR}/foels/ext/InternImage/checkpoint_dir/seg"
               SEG_TASK_TYPE="semantic";;
        "mask_rcnn_internimage_t_fpn_1x_coco.pth")
               SEG_MODEL_TYPE="internimage"
-              SEG_CHECKPOINT_DIR="${ROOT_DIR}/reconstruct4D/ext/InternImage/checkpoint_dir/det"
+              SEG_CHECKPOINT_DIR="${ROOT_DIR}/foels/ext/InternImage/checkpoint_dir/det"
               SEG_TASK_TYPE="instance";;
        "shi-labs/oneformer_coco_swin_large")
               SEG_MODEL_TYPE="oneformer"
@@ -210,7 +210,7 @@ else
                      set -eu
 
                      # Run MemFlow inference (need to cd to memflow directory for imports to work)
-                     cd "${ROOT_DIR}/reconstruct4D/ext/memflow"
+                     cd "${ROOT_DIR}/foels/ext/memflow"
                      # Set memory optimization for CUDA (PyTorch 1.13 compatible)
                      export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
                      export CUDA_LAUNCH_BLOCKING=0
@@ -263,16 +263,16 @@ else
               source "${ROOT_DIR}/.venv/bin/activate"
               echo "[INFO] env: $VIRTUAL_ENV"
 
-              if [ ! -f "${ROOT_DIR}/reconstruct4D/ext/unimatch/pretrained/${FLOW_MODEL_NAME}" ]; then
+              if [ ! -f "${ROOT_DIR}/foels/ext/unimatch/pretrained/${FLOW_MODEL_NAME}" ]; then
                      echo "[INFO] download pretrained model"
-                     mkdir -p "${ROOT_DIR}/reconstruct4D/ext/unimatch/pretrained"
-                     wget "https://s3.eu-central-1.amazonaws.com/avg-projects/unimatch/pretrained/${FLOW_MODEL_NAME}" -P "${ROOT_DIR}/reconstruct4D/ext/unimatch/pretrained"
+                     mkdir -p "${ROOT_DIR}/foels/ext/unimatch/pretrained"
+                     wget "https://s3.eu-central-1.amazonaws.com/avg-projects/unimatch/pretrained/${FLOW_MODEL_NAME}" -P "${ROOT_DIR}/foels/ext/unimatch/pretrained"
               fi
 
-              python "${ROOT_DIR}/reconstruct4D/ext/unimatch/main_flow.py" \
+              python "${ROOT_DIR}/foels/ext/unimatch/main_flow.py" \
               --inference_dir "${INPUT_DIR}" \
               --output_path "${RESULT_FLOW_DIR}" \
-              --resume "${ROOT_DIR}/reconstruct4D/ext/unimatch/pretrained/${FLOW_MODEL_NAME}" \
+              --resume "${ROOT_DIR}/foels/ext/unimatch/pretrained/${FLOW_MODEL_NAME}" \
               --padding_factor 32 \
               --upsample_factor 4 \
               --num_scales 2 \
@@ -332,16 +332,16 @@ else
 
                      echo "[INFO] run segmentation using: ${SEG_MODEL_TYPE} ${SEG_TASK_TYPE}"
                      if [ "$SEG_TASK_TYPE" = "instance" ]; then
-                            python "${ROOT_DIR}/reconstruct4D/ext/InternImage/detection/image_demo.py" \
+                            python "${ROOT_DIR}/foels/ext/InternImage/detection/image_demo.py" \
                             "${INPUT_DIR}" \
-                            "${ROOT_DIR}/reconstruct4D/ext/InternImage/detection/configs/coco/${SEG_MODEL_NAME%.*}.py" \
-                            "${ROOT_DIR}/reconstruct4D/ext/InternImage/checkpoint_dir/det/${SEG_MODEL_NAME}" \
+                            "${ROOT_DIR}/foels/ext/InternImage/detection/configs/coco/${SEG_MODEL_NAME%.*}.py" \
+                            "${ROOT_DIR}/foels/ext/InternImage/checkpoint_dir/det/${SEG_MODEL_NAME}" \
                             --out "${RESULT_SEG_DIR}"
                      elif [ "$SEG_TASK_TYPE" = "semantic" ]; then
-                            python "${ROOT_DIR}/reconstruct4D/ext/InternImage/segmentation/image_demo.py" \
+                            python "${ROOT_DIR}/foels/ext/InternImage/segmentation/image_demo.py" \
                                    "${INPUT_DIR}" \
-                                   "${ROOT_DIR}/reconstruct4D/ext/InternImage/segmentation/configs/ade20k/${SEG_MODEL_NAME%.*}.py" \
-                                   "${ROOT_DIR}/reconstruct4D/ext/InternImage/checkpoint_dir/seg/${SEG_MODEL_NAME}" \
+                                   "${ROOT_DIR}/foels/ext/InternImage/segmentation/configs/ade20k/${SEG_MODEL_NAME%.*}.py" \
+                                   "${ROOT_DIR}/foels/ext/InternImage/checkpoint_dir/seg/${SEG_MODEL_NAME}" \
                                    --palette ade20k --out "${RESULT_SEG_DIR}"
                      else
                             echo "[ERROR] unknown segmentation task type: ${SEG_TASK_TYPE}"
@@ -372,14 +372,14 @@ else
     mkdir -p "${RESULT_MOVOBJ_DIR}"
     if [ $LOG_LEVEL -ge 5 ]; then
        echo "[NOTE] Please press F5 to start debugging!"
-       python -Xfrozen_modules=off -m debugpy --listen 5678 --wait-for-client "${ROOT_DIR}/reconstruct4D/extract_moving_objects.py" \
+       python -Xfrozen_modules=off -m debugpy --listen 5678 --wait-for-client "${ROOT_DIR}/foels/extract_moving_objects.py" \
        --config "${PARAM_FILE}" \
        --input_dir "${INPUT_DIR}" \
        --flow_result_dir "${RESULT_FLOW_DIR}" \
        --segment_result_dir "${RESULT_SEG_DIR}" \
        --result_dir "${RESULT_MOVOBJ_DIR}"
     else
-       python "${ROOT_DIR}/reconstruct4D/extract_moving_objects.py" \
+       python "${ROOT_DIR}/foels/extract_moving_objects.py" \
        --config "${PARAM_FILE}" \
        --input_dir "${INPUT_DIR}" \
        --flow_result_dir "${RESULT_FLOW_DIR}" \
