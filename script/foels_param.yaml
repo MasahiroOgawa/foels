@@ -6,7 +6,7 @@ CreateImage:
   fps: 30 # frames per second
 
 OpticalFlow:
-  flow_type: "memflow" # optical flow method: "unimatch" or "memflow"
+  flow_type: "unimatch" # optical flow method: "unimatch" or "memflow"
   # Unimatch settings
   unimatch_model: "gmflow-scale2-regrefine6-mixdata-train320x576-4e7b215d.pth" # unimatch model
   unimatch_weights: "weights/gmflow-scale2-regrefine6-mixdata-train320x576-4e7b215d.pth"

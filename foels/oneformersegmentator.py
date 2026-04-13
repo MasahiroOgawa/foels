@@ -23,7 +23,13 @@ class OneFormerSegmentator:
         self, model_name="shi-labs/oneformer_coco_swin_large", task_type="panoptic"
     ):
         self.processor = OneFormerProcessor.from_pretrained(model_name)
-        self.model = OneFormerForUniversalSegmentation.from_pretrained(model_name)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = (
+            OneFormerForUniversalSegmentation.from_pretrained(model_name)
+            .to(self.device)
+            .half()
+            .eval()
+        )
         self.task_type = task_type
 
     def inference(self, image) -> tuple[torch.Tensor, list[dict]]:
@@ -38,8 +44,13 @@ class OneFormerSegmentator:
         inputs = self.processor(
             images=self.image, task_inputs=[self.task_type], return_tensors="pt"
         )
+        inputs = {
+            k: v.to(self.device).half() if v.is_floating_point() else v.to(self.device)
+            for k, v in inputs.items()
+        }
         with torch.no_grad():
             outputs = self.model(**inputs)
+        torch.cuda.empty_cache()
 
         if self.task_type == "semantic":
             self.predicted_map = self.processor.post_process_semantic_segmentation(
