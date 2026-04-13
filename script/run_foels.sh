@@ -273,6 +273,7 @@ else
               --inference_dir "${INPUT_DIR}" \
               --output_path "${RESULT_FLOW_DIR}" \
               --resume "${ROOT_DIR}/foels/ext/unimatch/pretrained/${FLOW_MODEL_NAME}" \
+              --inference_size 768 1024 \
               --padding_factor 32 \
               --upsample_factor 4 \
               --num_scales 2 \
