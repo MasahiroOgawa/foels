@@ -74,6 +74,8 @@ class OneFormerSegmentator:
                 "Invalid task type. Choose from 'semantic', 'instance', or 'panoptic'"
             )
 
+        if isinstance(self.predicted_map, torch.Tensor):
+            self.predicted_map = self.predicted_map.cpu()
         self._create_labelid_mask()
         return self.labelid_mask, self.predicted_map, self.segments_info
 

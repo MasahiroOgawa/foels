@@ -5,7 +5,7 @@ import torch
 import logging
 from typing import Optional, Tuple
 import numpy.typing as npt
-from ext.unimatch import utils
+from ext.unimatch.utils import frame_utils, flow_viz
 from PIL import Image
 
 # Setup logger
@@ -37,9 +37,9 @@ class UnimatchFlow:
         flow_file = os.path.join(self.FLOW_RESULT_DIR, f"{imgnum}_pred.flo")
         if flow_file is None:
             raise ValueError(f"flow file {flow_file} does not exist.")
-        self.flow = utils.frame_utils.readFlow(flow_file)
+        self.flow = frame_utils.readFlow(flow_file)
 
-        self.flow_img = utils.flow_viz.flow_to_image(self.flow)
+        self.flow_img = flow_viz.flow_to_image(self.flow)
 
 
 class MemFlow:
