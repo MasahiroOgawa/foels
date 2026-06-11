@@ -46,6 +46,8 @@ MovingObjectExtractor:
   middle_theta_deg: 30 # if the angle difference between flow and foe-pos becomes this value, the moving probability set to 0.5  [degree]
   thre_moving_prob: 0.25 # if moving probability is lower than this value, the pixel is considered as static
   thre_static_prob: 0.1 # threshold of static probability
+  fl_formula: "diff_log" # length-factor formula: diff_log | diff_lin | ratio_log | ratio_lin
+  foe_cache_dir: null # directory to read/write cached per-frame FoE state. when set, RANSAC is skipped for frames that already have a cache file.
   # thre_dominantflow_angle_deg: 10 # when computing undominant flow, if the angle differenct between the flow and median is larger than this value, the flow is considered as outlier [degree] currently unused.
 
   # visualization settings

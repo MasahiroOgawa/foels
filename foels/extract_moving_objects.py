@@ -70,7 +70,11 @@ class MovingObjectExtractor:
             log_level=args.loglevel,
             movprob_lengthfactor_coeff=args.movprob_lengthfactor_coeff,
             middle_theta=math.radians(args.middle_theta_deg),
+            fl_formula=getattr(args, "fl_formula", "diff_log"),
         )
+        self.foe_cache_dir = getattr(args, "foe_cache_dir", None)
+        if self.foe_cache_dir:
+            os.makedirs(self.foe_cache_dir, exist_ok=True)
         self.cur_imgname = None
         self.cur_img = None
         self.posterior_movpix_prob = None
@@ -126,7 +130,20 @@ class MovingObjectExtractor:
         self.seg.compute(self.cur_imgname)
 
         # compute camera is moving or not and focus of expansion
-        self.foe.compute(self.optflow.flow, self.seg.sky_mask, self.seg.static_mask)
+        cached_state = None
+        cache_path = None
+        if self.foe_cache_dir:
+            base = os.path.splitext(self.cur_imgname)[0]
+            cache_path = os.path.join(self.foe_cache_dir, f"{base}.foe.json")
+            cached_state = FoE.load_state_file(cache_path)
+        self.foe.compute(
+            self.optflow.flow,
+            self.seg.sky_mask,
+            self.seg.static_mask,
+            cached_state=cached_state,
+        )
+        if cache_path is not None and cached_state is None:
+            FoE.save_state_file(cache_path, self.foe.get_state())
 
         # compute posterior probability of moving pixels
         self.posterior_movpix_prob = self.seg.moving_prob * self.foe.moving_prob
@@ -352,6 +369,20 @@ if __name__ == "__main__":
         "--result_img_suffix",
         type=str,
         default=config.get("result_img_suffix", "_result_comb.png"),
+    )
+    parser.add_argument(
+        "--fl_formula",
+        type=str,
+        default=config.get("fl_formula", "diff_log"),
+        choices=("diff_log", "diff_lin", "ratio_log", "ratio_lin"),
+        help="Length-factor formula F_l for the moving-pixel probability.",
+    )
+    parser.add_argument(
+        "--foe_cache_dir",
+        type=str,
+        default=config.get("foe_cache_dir"),
+        help="Directory to read/write cached per-frame FoE state (JSON). When "
+        "set, RANSAC is skipped for frames that already have a cache file.",
     )
 
     final_args = parser.parse_args(remaining_argv)

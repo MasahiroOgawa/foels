@@ -1,8 +1,12 @@
+import json
 import logging
+import os
 from enum import Enum
 
 import cv2
 import numpy as np
+
+FL_FORMULAS = ("diff_log", "diff_lin", "ratio_log", "ratio_lin")
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -25,6 +29,7 @@ class FoE:
         log_level=0,
         movprob_lengthfactor_coeff=0.25,
         middle_theta=30 * np.pi / 180,
+        fl_formula="diff_log",
     ) -> None:
         # constants
         self.LOG_LEVEL = log_level
@@ -41,6 +46,11 @@ class FoE:
         self.THRE_FOE_W_INF = 1e-10
         self.MOVPROB_LENGTHFACTOR_COEFF = movprob_lengthfactor_coeff
         self.MIDDLE_THETA = middle_theta
+        if fl_formula not in FL_FORMULAS:
+            raise ValueError(
+                f"Unknown fl_formula '{fl_formula}'. Must be one of {FL_FORMULAS}."
+            )
+        self.FL_FORMULA = fl_formula
 
         # variables
         self.state = CameraState.ROTATING  # most unkown movement.
@@ -56,13 +66,17 @@ class FoE:
 
         self.logger = logging.getLogger(__name__)
 
-    def compute(self, flow, sky_mask, static_mask):
+    def compute(self, flow, sky_mask, static_mask, cached_state=None):
         """..ext.
         compute focus of expansion from optical flow.
         args:
             flow: optical flow. shape = (height, width, 2): 2 channel corresponds to (u, v)
             sky_mask: mask of sky. shape = (height, width), dtype = bool.
             static_mask: mask of static (very low prior moving probability segment) object except sky like grounds. shape = (height, width), dtype = bool
+            cached_state: optional dict previously returned by get_state(). When
+                provided, the camera-state decision and RANSAC FoE estimation are
+                skipped and the cached values are reused; only the per-pixel
+                moving-probability is recomputed (e.g., for an F_l-formula sweep).
         """
         self.flow = flow
         self.sky_mask = sky_mask
@@ -70,15 +84,60 @@ class FoE:
 
         self.prepare_variables()
 
-        self.comp_flow_existing_rate_in_static()
+        if cached_state is not None:
+            self.restore_state(cached_state)
+        else:
+            self.comp_flow_existing_rate_in_static()
+            if self.flow_existing_rate_in_static < self.THRE_FLOW_EXISTING_RATE:
+                self.state = CameraState.STOPPING
 
-        if self.flow_existing_rate_in_static < self.THRE_FLOW_EXISTING_RATE:
-            self.state = CameraState.STOPPING
+        if self.state == CameraState.STOPPING:
             self.comp_flow_existence()
         else:
-            # camera is considered as moving (set as rotating by default)
-            self.comp_foe_by_ransac()
+            if cached_state is None:
+                self.comp_foe_by_ransac()
             self.comp_movpixprob(self.foe_hom)
+
+    def get_state(self):
+        """Return a small JSON-serializable dict capturing every per-frame
+        FoE result that comp_movpixprob / comp_flow_existence depends on.
+        Used to cache the RANSAC output so F_l-formula sweeps can skip it."""
+        return {
+            "state": self.state.name,
+            "foe_hom": (
+                self.foe_hom.tolist() if self.foe_hom is not None else None
+            ),
+            "foe_sign": int(self.foe_sign),
+            "flow_existing_rate_in_static": float(self.flow_existing_rate_in_static),
+            "mean_flow_length_in_static": float(self.mean_flow_length_in_static),
+            "inlier_rate": float(self.inlier_rate),
+        }
+
+    def restore_state(self, cached_state):
+        self.state = CameraState[cached_state["state"]]
+        foe = cached_state["foe_hom"]
+        self.foe_hom = np.array(foe, dtype=np.float64) if foe is not None else None
+        self.foe_sign = int(cached_state["foe_sign"])
+        self.flow_existing_rate_in_static = float(
+            cached_state["flow_existing_rate_in_static"]
+        )
+        self.mean_flow_length_in_static = float(
+            cached_state["mean_flow_length_in_static"]
+        )
+        self.inlier_rate = float(cached_state["inlier_rate"])
+
+    @staticmethod
+    def load_state_file(path):
+        if not os.path.isfile(path):
+            return None
+        with open(path) as f:
+            return json.load(f)
+
+    @staticmethod
+    def save_state_file(path, state):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            json.dump(state, f)
 
     def draw(self, bg_img=None):
         self.bg_img = bg_img
@@ -529,6 +588,31 @@ class FoE:
     def sigmoid(x):
         return 1 / (1 + np.exp(-x))
 
+    def _compute_length_factor(self, flow_length, mean_length):
+        """Length factor F_l for the moving-pixel probability.
+
+        Four variants for the IJAT reviewer ablation. All four return 0 in the
+        "no relative-length information" case (flow_length == mean_length, i.e.
+        d_l == 1 and Δlength == 0) and are non-negative.
+        - diff_log  (current code): |log10(1 + |flow_length - mean_length|)|
+        - diff_lin               : |flow_length - mean_length|
+        - ratio_log (paper claim): |log10(d_l)|,  d_l = flow_length / mean_length
+        - ratio_lin              : |d_l - 1|
+        Ratio variants clamp flow_length and mean_length at THRE_FOE_W_INF to
+        avoid log10(0) / division by zero on no-flow pixels.
+        """
+        if self.FL_FORMULA == "diff_log":
+            return abs(np.log10(1 + abs(flow_length - mean_length)))
+        if self.FL_FORMULA == "diff_lin":
+            return abs(flow_length - mean_length)
+        eps = self.THRE_FOE_W_INF
+        ratio = max(flow_length, eps) / max(mean_length, eps)
+        if self.FL_FORMULA == "ratio_log":
+            return abs(np.log10(max(ratio, eps)))
+        if self.FL_FORMULA == "ratio_lin":
+            return abs(ratio - 1)
+        raise ValueError(f"Unknown fl_formula: {self.FL_FORMULA}")
+
     def comp_movpixprob(self, foe) -> float:
         """
         compute moving pixel probability by length and angle difference.
@@ -555,9 +639,7 @@ class FoE:
                     mean_length = self.THRE_FLOWLENGTH
                 else:
                     mean_length = self.mean_flow_length_in_static
-                length_factor = abs(
-                    np.log10(1 + abs(flow_length - mean_length))
-                )  # totally the same case should bo 0 = log(1).
+                length_factor = self._compute_length_factor(flow_length, mean_length)
 
                 # check the angle between flow and expected flow direction (signed FoE-to-each-pixel) is lower than the threshold.
                 expect_flowdir = self.foe_sign * np.array([col - foe_u, row - foe_v, 1])
